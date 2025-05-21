@@ -31,7 +31,7 @@ RETURNS SETOF complex_txs_result
  STABLE
  AS $function$
 BEGIN
-    PERFORM set_config('jit', 'off', true);
+    -- PERFORM set_config('jit', 'off', true);
     RETURN QUERY
     SELECT 
         pm.transaction_hash, 
@@ -50,7 +50,7 @@ BEGIN
         (SELECT m.*, pm.detail 
          FROM public.message_copy m
 		 left join public.parsed_message_copy pm on m.transaction_hash = pm.tx_hash AND m."index" = pm.msg_index
-         WHERE address = ANY(m.involved_accounts_addresses)) pm
+         WHERE address <@ m.involved_accounts_addresses) pm
     JOIN 
         (SELECT t.hash, t.success, t.memo, t.gas_wanted, t.gas_used, b."timestamp" 
          FROM public.transaction_copy t, public.block_copy b 
@@ -80,7 +80,7 @@ UNION ALL
 		public.complex_txs_mateview ptmv
 	WHERE 
         'hub' = ANY(net_filter)
-		AND address = ANY(ptmv.addresses) 
+		AND address <@ ptmv.addresses
         AND ptmv."timestamp" BETWEEN start_time AND end_time
 UNION ALL
     SELECT 
@@ -100,7 +100,7 @@ UNION ALL
         (SELECT m.*, pm.detail 
          FROM rollapp_checkin.message_copy m
 		 left join rollapp_checkin.parsed_message_copy pm on m.transaction_hash = pm.tx_hash AND m."index" = pm.msg_index
-         WHERE address = ANY(m.involved_accounts_addresses)) rm
+         WHERE address <@ m.involved_accounts_addresses) rm
     JOIN 
         (SELECT t.hash, t.success, t.memo, t.gas_wanted, t.gas_used, b."timestamp" 
          FROM rollapp_checkin.transaction_copy t, rollapp_checkin.block_copy b 
@@ -130,7 +130,7 @@ UNION ALL
 		rollapp_checkin.complex_txs_mateview rtmv
 	WHERE 
         'rollapp_checkin' = ANY(net_filter)
-		AND address = ANY(rtmv.addresses) 
+		AND address <@ rtmv.addresses
         AND rtmv."timestamp"  BETWEEN start_time AND end_time;
 END;
 $function$;
@@ -143,7 +143,7 @@ CREATE OR REPLACE FUNCTION public.complex_txs_func(address text, module text, ne
  STABLE
 AS $function$
 BEGIN
-    PERFORM set_config('jit', 'off', true);
+    -- PERFORM set_config('jit', 'off', true);
     RETURN QUERY
     SELECT 
         pm.transaction_hash, 
@@ -162,7 +162,7 @@ BEGIN
         (SELECT m.*, pm.detail 
          FROM public.message_copy m
 		 left join public.parsed_message_copy pm on m.transaction_hash = pm.tx_hash AND m."index" = pm.msg_index
-         WHERE address = ANY(m.involved_accounts_addresses)) pm
+         WHERE address <@ m.involved_accounts_addresses) pm
     JOIN 
         (SELECT t.hash, t.success, t.memo, t.gas_wanted, t.gas_used, b."timestamp" 
          FROM public.transaction_copy t, public.block_copy b 
@@ -201,9 +201,9 @@ UNION ALL
 		public.complex_txs_mateview ptmv
 	WHERE 
         'hub' = ANY(net_filter)
-		AND address = ANY(ptmv.addresses)
+		AND address <@ ptmv.addresses
         AND ptmv."timestamp" BETWEEN start_time AND end_time
-		AND (module = ptmv.business_type OR module = ANY(ptmv.business_msg_type))
+		AND (module = ptmv.business_type OR module <@ ptmv.business_msg_type)
 UNION ALL
     SELECT 
         rm.transaction_hash, 
@@ -222,7 +222,7 @@ UNION ALL
         (SELECT m.*, pm.detail 
          FROM rollapp_checkin.message_copy m
 		 left join rollapp_checkin.parsed_message_copy pm on m.transaction_hash = pm.tx_hash AND m."index" = pm.msg_index
-         WHERE address = ANY(m.involved_accounts_addresses)) rm
+         WHERE address <@ m.involved_accounts_addresses) rm
     JOIN 
         (SELECT t.hash, t.success, t.memo, t.gas_wanted, t.gas_used, b."timestamp" 
          FROM rollapp_checkin.transaction_copy t, rollapp_checkin.block_copy b 
@@ -237,7 +237,7 @@ UNION ALL
         (SELECT mt.type, mt.business_msg_type 
          FROM rollapp_checkin.message_type mt) rmt 
     ON rm."type" = rmt."type"
-    WHERE (module = ANY(rmt.business_msg_type))
+    WHERE (module <@ rmt.business_msg_type)
       AND ('rollapp_checkin' = ANY(net_filter))
 UNION ALL
 	SELECT 
@@ -257,9 +257,9 @@ UNION ALL
 		rollapp_checkin.complex_txs_mateview rtmv
 	WHERE 
         'rollapp_checkin' = ANY(net_filter)
-		AND address = ANY(rtmv.addresses)
+		AND address <@ rtmv.addresses
         AND rtmv."timestamp" BETWEEN start_time AND end_time
-		AND (module = rtmv.business_type OR module = ANY(rtmv.business_msg_type));
+		AND (module = rtmv.business_type OR module <@ rtmv.business_msg_type);
 END;
 $function$
 ;
