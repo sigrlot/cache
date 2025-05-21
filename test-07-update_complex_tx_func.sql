@@ -1,0 +1,2 @@
+select * from complex_txs_func('addr1', 'checkin', '{hub, rollapp_checkin}', '2020-05-20 15:30:40.265 +0800', '2025-06-20 15:30:40.265 +0800');
+select * from  all_complex_txs_func('addr1','{hub, rollapp_checkin}', '2020-05-20 15:30:40.265 +0800', '2025-06-20 15:30:40.265 +0800');
